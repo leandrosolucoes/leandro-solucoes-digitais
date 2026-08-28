@@ -1,0 +1,7 @@
+{
+  "name": "Leandro | Soluções Digitais",
+  "description": "Analisamos empresas para descobrir onde tecnologia, IA e software podem realmente ajudar a evoluir.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+
