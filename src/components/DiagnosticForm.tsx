@@ -1,7 +1,14 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ArrowRight, CheckCircle2, Send, MessageCircle, RefreshCw, User, Building, Phone, Mail, FileEdit, HelpCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle2, MessageCircle, RefreshCw, User, Building, Phone, Mail, FileEdit, HelpCircle } from 'lucide-react';
 import { DiagnosticFormData } from '../types';
+
+// =========================================================================
+// CONFIGURAÇÃO DO WHATSAPP
+// Substitua o número abaixo pelo número desejado (DDI + DDD + NÚMERO, apenas dígitos)
+// Exemplo: '5519987611229'
+// =========================================================================
+export const WHATSAPP_CONTACT_NUMBER = '5519987611229';
 
 export const DiagnosticForm: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<number>(1);
@@ -93,10 +100,28 @@ export const DiagnosticForm: React.FC = () => {
     setErrors({});
   };
 
-  // Generate WhatsApp message preview for immediate chat if user wants
-  const encodedWhatsappText = encodeURIComponent(
-    `Olá Leandro! Preenchi o formulário de diagnóstico da Leandro | Soluções Digitais.\n\n*Nome:* ${formData.name}\n*Empresa:* ${formData.companyName} (${formData.companySegment || 'Geral'})\n*Motivo:* ${formData.primaryMotivation}\n*Descrição:* ${formData.businessDescription}\n\nGostaria de agendar nossa primeira conversa!`
-  );
+  // Montagem da mensagem estruturada para envio via WhatsApp
+  const generateWhatsAppMessage = (): string => {
+    const lines = [
+      'NOVO DIAGNÓSTICO — LEANDRO | SOLUÇÕES DIGITAIS',
+      '',
+      'INFORMAÇÕES DA EMPRESA',
+      `Nome: ${formData.name}`,
+      `Empresa: ${formData.companyName}`,
+      `Segmento: ${formData.companySegment || 'Não informado'}`,
+      `Contato: ${formData.whatsapp}`,
+      `E-mail: ${formData.email}`,
+      '',
+      'DIAGNÓSTICO & CONTEXTO',
+      `Descrição da empresa: ${formData.businessDescription}`,
+      '',
+      'OBJETIVOS & PRINCIPAIS NECESSIDADES',
+      `Motivação principal: ${formData.primaryMotivation}`,
+    ];
+    return lines.join('\n');
+  };
+
+  const encodedWhatsAppUrl = `https://wa.me/${WHATSAPP_CONTACT_NUMBER}?text=${encodeURIComponent(generateWhatsAppMessage())}`;
 
   return (
     <section id="contato" className="py-24 sm:py-36 relative bg-zinc-950 border-t border-zinc-900 overflow-hidden">
@@ -381,14 +406,14 @@ export const DiagnosticForm: React.FC = () => {
                     type="submit"
                     className="px-6 py-3 rounded-lg bg-white text-zinc-950 font-semibold text-sm hover:bg-zinc-200 active:scale-[0.98] transition-all flex items-center gap-2 shadow-[0_0_20px_rgba(255,255,255,0.3)]"
                   >
-                    <span>{currentStep === 6 ? 'Enviar Informações' : 'Continuar'}</span>
+                    <span>{currentStep === 6 ? 'Finalizar e Preparar Diagnóstico' : 'Continuar'}</span>
                     <ArrowRight className="w-4 h-4" />
                   </button>
                 </div>
               </form>
             </div>
           ) : (
-            /* Submission Confirmation View */
+            /* Submission / Ready for WhatsApp View */
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -400,40 +425,54 @@ export const DiagnosticForm: React.FC = () => {
 
               <div>
                 <span className="text-xs font-mono text-emerald-400 uppercase tracking-widest block mb-1">
-                  Recebido com Sucesso
+                  Pronto para Envio
                 </span>
                 <h3 className="text-2xl sm:text-3xl font-display font-bold text-white">
-                  Muito obrigado, {formData.name}!
+                  Diagnóstico preparado com sucesso.
                 </h3>
                 <p className="text-sm text-zinc-300 mt-2 max-w-md mx-auto font-light leading-relaxed">
-                  Registramos o momento da sua empresa (<strong className="text-white">{formData.companyName}</strong>).
-                  Analisaremos o contexto e entraremos em contato via WhatsApp/E-mail em breve para agendar a conversa diagnóstica.
+                  Suas respostas estão prontas para serem enviadas diretamente para nossa equipe pelo WhatsApp.
+                </p>
+                <p className="text-xs text-zinc-400 font-mono mt-1">
+                  Não é necessário criar uma conta.
                 </p>
               </div>
 
-              {/* Summary Pill */}
-              <div className="p-4 rounded-xl bg-zinc-950 border border-zinc-800 text-left text-xs text-zinc-400 font-mono space-y-1">
-                <div><span className="text-zinc-500">Contato:</span> {formData.whatsapp} | {formData.email}</div>
-                <div><span className="text-zinc-500">Foco:</span> {formData.primaryMotivation}</div>
+              {/* Summary Preview Box */}
+              <div className="p-4 sm:p-5 rounded-2xl bg-zinc-950 border border-zinc-800 text-left text-xs font-mono space-y-2">
+                <div className="text-zinc-300 font-bold border-b border-zinc-900 pb-1.5 flex items-center justify-between">
+                  <span>RESUMO DO DIAGNÓSTICO</span>
+                  <span className="text-emerald-400 font-normal">Pronto</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-zinc-300 pt-1">
+                  <div><span className="text-zinc-400">Nome:</span> {formData.name}</div>
+                  <div><span className="text-zinc-400">Empresa:</span> {formData.companyName} {formData.companySegment ? `(${formData.companySegment})` : ''}</div>
+                  <div><span className="text-zinc-400">WhatsApp:</span> {formData.whatsapp}</div>
+                  <div><span className="text-zinc-400">E-mail:</span> {formData.email}</div>
+                </div>
+                <div className="border-t border-zinc-900 pt-2 text-zinc-300">
+                  <span className="text-zinc-400 block mb-0.5">Objetivo:</span>
+                  <span>{formData.primaryMotivation}</span>
+                </div>
               </div>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                 <a
-                  href={`https://wa.me/?text=${encodedWhatsappText}`}
+                  href={encodedWhatsAppUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-emerald-500 text-zinc-950 font-bold text-sm hover:bg-emerald-400 transition-colors shadow-lg"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-lg bg-emerald-500 text-zinc-950 font-bold text-sm hover:bg-emerald-400 active:scale-[0.98] transition-all shadow-[0_0_25px_rgba(16,185,129,0.3)]"
                 >
                   <MessageCircle className="w-4 h-4" />
-                  <span>Chamar no WhatsApp agora</span>
+                  <span>Enviar diagnóstico pelo WhatsApp</span>
                 </a>
 
                 <button
                   onClick={handleReset}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-zinc-800 text-xs font-mono text-zinc-400 hover:text-white"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg border border-zinc-800 text-xs font-mono text-zinc-400 hover:text-white hover:border-zinc-700 transition-colors"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
-                  <span>Enviar outro diagnóstico</span>
+                  <span>Fazer outro diagnóstico</span>
                 </button>
               </div>
             </motion.div>
